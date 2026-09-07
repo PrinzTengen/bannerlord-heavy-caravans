@@ -1,0 +1,78 @@
+name: Release
+
+# Runs on every merge / push to main: tests + release build of the module.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+env:
+  DOTNET_VERSION: "6.0.x"
+  MODULE_NAME: "HeavyCaravans"
+
+jobs:
+  test:
+    name: Test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+  build-release:
+    name: Release Build
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build (Release)
+        run: dotnet build --configuration Release --no-restore
+
+      # Expects the standard module structure from the mod plan:
+      #   Modules/<MODULE_NAME>/SubModule.xml
+      #   Modules/<MODULE_NAME>/bin/Win64_Shipping_Client/*.dll
+      #   Modules/<MODULE_NAME>/ModuleData/*
+      - name: Package module
+        shell: pwsh
+        run: |
+          $modulePath = "Modules/${{ env.MODULE_NAME }}"
+          if (-not (Test-Path $modulePath)) {
+            Write-Warning "Module folder '$modulePath' does not exist yet - skipping packaging."
+            exit 0
+          }
+          $releaseDir = "release"
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+          $zipPath = Join-Path $releaseDir "$($env:MODULE_NAME)-$($env:GITHUB_SHA.Substring(0,7)).zip"
+          Compress-Archive -Path $modulePath -DestinationPath $zipPath -Force
+          Write-Host "Created: $zipPath"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MODULE_NAME }}-release
+          path: release/*.zip
+          if-no-files-found: warn

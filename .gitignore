@@ -1,0 +1,30 @@
+# ============================================================
+# Ignore rules
+# ============================================================
+
+# internal planning files (not part of the mod source code)
+phases/
+
+# .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.dll
+*.pdb
+
+# Rider / JetBrains
+.idea/
+
+# Bannerlord module output (build results, not source code)
+Modules/HeavyCaravans/bin/
+
+# Release artifacts
+release/
+*.zip
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.log
