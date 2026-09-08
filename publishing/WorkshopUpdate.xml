@@ -5,12 +5,45 @@
     </GetItem>
     <UpdateItem>
         <ModuleFolder Value="E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\HeavyCaravans"/>
-        <ChangeNotes Value="TODO: what changed in this version"/>
+        <ChangeNotes Value="Made the item public and added install/configuration instructions to the description."/>
+        <ItemDescription Value="Adds a third, heavier trade caravan option - armed with roughly double the troops of an elite caravan, plus extra capacity you can reinforce yourself.
+
+FEATURES
+- A new &quot;Heavy Caravan&quot; option when you form a caravan through a town notable
+- Starts with about twice the troops of an elite caravan
+- Reinforceable with up to 20 extra troops from your own party (one-directional - troops can only be added, never pulled back out)
+- Fully configurable through a simple settings file, no other tools required
+
+INSTALLATION
+1. Click Subscribe on this page.
+2. Launch Mount &amp; Blade II: Bannerlord through the Launcher (not directly through Steam).
+3. In the Launcher, open the Singleplayer tab and find &quot;Heavy Caravans&quot; in the module list. Check its box to enable it.
+4. Click Play.
+
+HOW TO FORM A HEAVY CARAVAN
+Talk to a merchant or artisan notable in any town and choose to form a caravan. After the usual small/large caravan options, you will also be offered the option to form a Heavy Caravan for a higher price.
+
+REINFORCING YOUR HEAVY CARAVAN
+Once you own one, talk to its leader (one of your companions) and choose to check on or reinforce its escort. You can transfer troops from your own party up to its capacity. Transfers only ever go from your party into the caravan.
+
+CONFIGURATION
+Settings are read from two places, in this order (the second overrides the first if both exist):
+- Modules/HeavyCaravans/ModuleData/HeavyCaravans.ini (ships with the mod)
+- Documents/Mount and Blade II Bannerlord/Configs/ModSettings/HeavyCaravans/HeavyCaravans.ini (created automatically the first time you launch with the mod enabled - edit this one if you want your changes to survive future updates)
+
+Available settings:
+- GlobalCaravanTroopMultiplier (default 1.0) - scales the starting troops of every caravan
+- HeavyCaravanTroopMultiplier (default 2.0) - how much bigger a Heavy Caravan is compared to a regular elite caravan
+- HeavyCaravanBonusCapacity (default 20) - extra troop slots a Heavy Caravan can be reinforced with
+- HeavyCaravanPriceMultiplier (default 2.0) - how much more a Heavy Caravan costs to form
+
+Changes take effect after restarting the game."/>
         <Tags>
             <Tag Value="Troops" />
             <Tag Value="Native" />
             <Tag Value="Singleplayer" />
             <Tag Value="v1.4.8" />
         </Tags>
+        <Visibility Value="Public"/>
     </UpdateItem>
 </Tasks>

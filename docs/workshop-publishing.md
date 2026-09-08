@@ -52,7 +52,13 @@ Für den normalen Entwicklungsalltag ist das nicht nötig.
 
 ## Sichtbarkeit
 
-Aktuell `FriendsOnly` in `WorkshopCreate.xml` (mit Max abgestimmt: Mod ist noch
-in aktivem Test, ein Kollege soll testen können). Auf `Public` umstellen,
-sobald Phase 16-22 durch sind - entweder direkt in der XML vor dem nächsten
-Update-Upload, oder jederzeit über die Steam-Workshop-Seite des Items selbst.
+War `FriendsOnly`, jetzt auf `Public` umgestellt (Kollege konnte trotz
+Steam-Freundschaft nicht zugreifen) - in `WorkshopUpdate.xml` und
+`WorkshopCreate.xml` gesetzt. Wird erst nach dem nächsten Update-Upload
+(s. "Updates" oben) tatsächlich auf Steam wirksam.
+
+## Beschreibung
+
+`ItemDescription` in `WorkshopUpdate.xml`/`WorkshopCreate.xml` enthält jetzt
+eine vollständige Installations-/Konfigurationsanleitung für Endnutzer -
+bewusst ohne jede Erwähnung von Coop oder TAOM (auf Wunsch von Max).
