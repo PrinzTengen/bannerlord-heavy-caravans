@@ -11,6 +11,16 @@
     <BannerlordGameDir Condition="'$(BannerlordGameDir)' == '' AND '$(BANNERLORD_GAME_DIR)' != ''">$(BANNERLORD_GAME_DIR)</BannerlordGameDir>
     <BannerlordGameDir Condition="'$(BannerlordGameDir)' == ''">E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord</BannerlordGameDir>
     <BannerlordBinDir>$(BannerlordGameDir)\bin\Win64_Shipping_Client\</BannerlordBinDir>
+
+    <!--
+      Where the built module gets deployed for local testing. Deliberately a plain file COPY
+      (see the csproj's CopyToModule target), not a symlink/junction into the game's Modules
+      folder: a junction there got silently deleted (most likely by Steam's own Workshop sync
+      once the mod was subscribed/published), which crashed the Workshop upload tool entirely.
+      A real, independent folder - just repopulated by every build - doesn't have that failure
+      mode. The repo's own Modules/HeavyCaravans/ stays the source of truth that gets copied FROM.
+    -->
+    <BannerlordModulesDir>$(BannerlordGameDir)\Modules\</BannerlordModulesDir>
   </PropertyGroup>
 
 </Project>

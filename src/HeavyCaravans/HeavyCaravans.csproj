@@ -8,8 +8,12 @@
     <Nullable>disable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <!-- The Modules/HeavyCaravans/bin/Win64_Shipping_Client copy is the one Bannerlord actually loads. -->
-    <ModuleOutputDir>$(MSBuildThisFileDirectory)..\..\Modules\HeavyCaravans\bin\Win64_Shipping_Client\</ModuleOutputDir>
+    <!-- Repo-tracked module source (SubModule.xml, ModuleData) - copied into the actual game
+         install by CopyToModule below. See Directory.Build.props for why this is a copy, not a
+         symlink/junction, into the game's Modules folder. -->
+    <ModuleSourceDir>$(MSBuildThisFileDirectory)..\..\Modules\HeavyCaravans\</ModuleSourceDir>
+    <GameModuleDir>$(BannerlordModulesDir)HeavyCaravans\</GameModuleDir>
+    <GameModuleBinDir>$(GameModuleDir)bin\Win64_Shipping_Client\</GameModuleBinDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,15 +55,23 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Deploys the build output straight into the module folder Bannerlord loads from. -->
+  <!--
+    Deploys the module straight into the real game install (bin output + the repo-tracked
+    SubModule.xml/ModuleData) so Bannerlord and the Steam Workshop uploader both see a complete,
+    independent Modules/HeavyCaravans folder - no symlink/junction involved, see
+    Directory.Build.props. Re-run on every build, so the repo stays the only thing you actually edit.
+  -->
   <Target Name="CopyToModule" AfterTargets="Build">
     <ItemGroup>
-      <ModuleOutputFiles Include="$(TargetDir)HeavyCaravans.dll" />
-      <ModuleOutputFiles Include="$(TargetDir)HeavyCaravans.pdb" Condition="Exists('$(TargetDir)HeavyCaravans.pdb')" />
-      <ModuleOutputFiles Include="$(TargetDir)0Harmony.dll" Condition="Exists('$(TargetDir)0Harmony.dll')" />
+      <ModuleBinFiles Include="$(TargetDir)HeavyCaravans.dll" />
+      <ModuleBinFiles Include="$(TargetDir)HeavyCaravans.pdb" Condition="Exists('$(TargetDir)HeavyCaravans.pdb')" />
+      <ModuleBinFiles Include="$(TargetDir)0Harmony.dll" Condition="Exists('$(TargetDir)0Harmony.dll')" />
+      <ModuleDataFiles Include="$(ModuleSourceDir)ModuleData\**\*" />
     </ItemGroup>
-    <MakeDir Directories="$(ModuleOutputDir)" Condition="!Exists('$(ModuleOutputDir)')" />
-    <Copy SourceFiles="@(ModuleOutputFiles)" DestinationFolder="$(ModuleOutputDir)" SkipUnchangedFiles="true" />
+    <MakeDir Directories="$(GameModuleBinDir)" Condition="!Exists('$(GameModuleBinDir)')" />
+    <Copy SourceFiles="@(ModuleBinFiles)" DestinationFolder="$(GameModuleBinDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ModuleSourceDir)SubModule.xml" DestinationFolder="$(GameModuleDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ModuleDataFiles)" DestinationFolder="$(GameModuleDir)ModuleData\%(RecursiveDir)" SkipUnchangedFiles="true" Condition="'@(ModuleDataFiles)' != ''" />
   </Target>
 
 </Project>
