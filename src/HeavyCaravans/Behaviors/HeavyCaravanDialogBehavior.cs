@@ -125,37 +125,54 @@ namespace HeavyCaravans.Behaviors
 
         private void OnLeaderAcceptConsequence()
         {
-            if (!CoopInterop.CanPerformAuthoritativeAction())
+            // heavy_caravan_final_line's text is {HEAVY_CARAVAN_FINAL_TEXT} - if we return (or throw)
+            // without ever setting it, that dialog line has nothing to render, which is the prime
+            // suspect for the "stuck in companion selection" report: the window never gets an error,
+            // it just has no text to show. Every exit path below sets it, success or failure, so the
+            // dialog can always close cleanly - and every failure path logs *why*, since none of them
+            // did before.
+            MBTextManager.SetTextVariable("HEAVY_CARAVAN_FINAL_TEXT", new TextObject("{=!}Something went wrong and no caravan was formed. Check HeavyCaravans.log for details."));
+
+            try
             {
-                Log.Warn("Heavy caravan creation blocked: no host authority.");
-                return;
-            }
-            Log.Info("Host authority detected, proceeding with Heavy caravan creation.");
+                if (!CoopInterop.CanPerformAuthoritativeAction())
+                {
+                    Log.Warn("Heavy caravan creation blocked: no host authority.");
+                    return;
+                }
+                Log.Info("Host authority detected, proceeding with Heavy caravan creation.");
 
-            var leaderCharacter = ConversationSentence.SelectedRepeatObject as CharacterObject;
-            Hero leader = leaderCharacter?.HeroObject;
-            if (leader == null)
+                var leaderCharacter = ConversationSentence.SelectedRepeatObject as CharacterObject;
+                Hero leader = leaderCharacter?.HeroObject;
+                if (leader == null)
+                {
+                    Log.Error($"Heavy caravan creation aborted: SelectedRepeatObject was not a hero's CharacterObject (was: {ConversationSentence.SelectedRepeatObject?.GetType().FullName ?? "null"}).");
+                    return;
+                }
+
+                Settlement settlement = Settlement.CurrentSettlement;
+                int cost = GetCost();
+
+                CampaignMission.Current?.FadeOutCharacter(leaderCharacter);
+                LeaveSettlementAction.ApplyForCharacterOnly(leader);
+
+                MobileParty party = HeavyCaravanService.CreateHeavyCaravan(Hero.MainHero, settlement, leader);
+                if (party == null)
+                {
+                    Log.Error($"Heavy caravan creation failed: HeavyCaravanService.CreateHeavyCaravan returned null for leader {leader.Name} at {settlement?.Name}.");
+                    return;
+                }
+                GiveGoldAction.ApplyForCharacterToSettlement(Hero.MainHero, settlement, cost);
+
+                TextObject textObject = new TextObject("{=!}A new Heavy Caravan is created for {HERO.NAME}.");
+                StringHelpers.SetCharacterProperties("HERO", Hero.MainHero.CharacterObject, textObject);
+                MBTextManager.SetTextVariable("HEAVY_CARAVAN_FINAL_TEXT", new TextObject("{=!}Ok then. I will call my finest men to help you form this caravan. May it serve you well."));
+                InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
+            }
+            catch (System.Exception ex)
             {
-                return;
+                Log.Error("Heavy caravan creation threw an exception.", ex);
             }
-
-            Settlement settlement = Settlement.CurrentSettlement;
-            int cost = GetCost();
-
-            CampaignMission.Current?.FadeOutCharacter(leaderCharacter);
-            LeaveSettlementAction.ApplyForCharacterOnly(leader);
-
-            MobileParty party = HeavyCaravanService.CreateHeavyCaravan(Hero.MainHero, settlement, leader);
-            if (party == null)
-            {
-                return;
-            }
-            GiveGoldAction.ApplyForCharacterToSettlement(Hero.MainHero, settlement, cost);
-
-            TextObject textObject = new TextObject("{=!}A new Heavy Caravan is created for {HERO.NAME}.");
-            StringHelpers.SetCharacterProperties("HERO", Hero.MainHero.CharacterObject, textObject);
-            MBTextManager.SetTextVariable("HEAVY_CARAVAN_FINAL_TEXT", new TextObject("{=!}Ok then. I will call my finest men to help you form this caravan. May it serve you well."));
-            InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
         }
 
         private static bool IsTalkingToOwnHeavyCaravanLeader()
