@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    Path to the local Bannerlord installation, used to reference the TaleWorlds
+    engine DLLs during compilation. Only needed on dev machines building locally
+    in Visual Studio - CI does not have the game installed (see docs/environment.md).
+    Override with the BANNERLORD_GAME_DIR environment variable if your install is
+    elsewhere.
+  -->
+  <PropertyGroup>
+    <BannerlordGameDir Condition="'$(BannerlordGameDir)' == '' AND '$(BANNERLORD_GAME_DIR)' != ''">$(BANNERLORD_GAME_DIR)</BannerlordGameDir>
+    <BannerlordGameDir Condition="'$(BannerlordGameDir)' == ''">E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord</BannerlordGameDir>
+    <BannerlordBinDir>$(BannerlordGameDir)\bin\Win64_Shipping_Client\</BannerlordBinDir>
+  </PropertyGroup>
+
+</Project>

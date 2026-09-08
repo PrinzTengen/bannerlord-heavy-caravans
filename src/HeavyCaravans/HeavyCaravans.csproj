@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>HeavyCaravans</RootNamespace>
+    <AssemblyName>HeavyCaravans</AssemblyName>
+    <Nullable>disable</Nullable>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- The Modules/HeavyCaravans/bin/Win64_Shipping_Client copy is the one Bannerlord actually loads. -->
+    <ModuleOutputDir>$(MSBuildThisFileDirectory)..\..\Modules\HeavyCaravans\bin\Win64_Shipping_Client\</ModuleOutputDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Bundled privately (Copy Local) so HeavyCaravans works standalone, without depending on
+         another mod's shared Harmony host. TAOM.Dependencies redirects bundled Harmony copies
+         to its own canonical instance via AssemblyResolve when TAOM is present, so this is safe
+         to coexist with TAOM/Coop too. -->
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="TaleWorlds.CampaignSystem">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.CampaignSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.Core">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.Library">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.Library.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.Localization">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.Localization.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.ObjectSystem">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.ObjectSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.MountAndBlade">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.MountAndBlade.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.SaveSystem">
+      <HintPath>$(BannerlordBinDir)TaleWorlds.SaveSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Deploys the build output straight into the module folder Bannerlord loads from. -->
+  <Target Name="CopyToModule" AfterTargets="Build">
+    <ItemGroup>
+      <ModuleOutputFiles Include="$(TargetDir)HeavyCaravans.dll" />
+      <ModuleOutputFiles Include="$(TargetDir)HeavyCaravans.pdb" Condition="Exists('$(TargetDir)HeavyCaravans.pdb')" />
+      <ModuleOutputFiles Include="$(TargetDir)0Harmony.dll" Condition="Exists('$(TargetDir)0Harmony.dll')" />
+    </ItemGroup>
+    <MakeDir Directories="$(ModuleOutputDir)" Condition="!Exists('$(ModuleOutputDir)')" />
+    <Copy SourceFiles="@(ModuleOutputFiles)" DestinationFolder="$(ModuleOutputDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

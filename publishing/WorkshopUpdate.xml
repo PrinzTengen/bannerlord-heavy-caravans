@@ -1,0 +1,16 @@
+<Tasks>
+    <GetItem>
+        <ItemId Value="3797960028"/>
+        <!-- Find it in your Workshop item's page URL, e.g. steamcommunity.com/sharedfiles/filedetails/?id=THIS_NUMBER -->
+    </GetItem>
+    <UpdateItem>
+        <ModuleFolder Value="E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\HeavyCaravans"/>
+        <ChangeNotes Value="TODO: what changed in this version"/>
+        <Tags>
+            <Tag Value="Troops" />
+            <Tag Value="Native" />
+            <Tag Value="Singleplayer" />
+            <Tag Value="v1.4.8" />
+        </Tags>
+    </UpdateItem>
+</Tasks>

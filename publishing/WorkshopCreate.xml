@@ -1,0 +1,22 @@
+<Tasks>
+    <CreateItem/>
+    <UpdateItem>
+        <ModuleFolder Value="E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\HeavyCaravans"/>
+        <!-- The Workshop item title comes from SubModule.xml's <Name value="Heavy Caravans" />, not from here. -->
+        <ItemDescription Value="Adds a third, heavier caravan option (2x an elite caravan's base troops, +20 reinforceable capacity) on top of the vanilla/TAOM caravan system. Works standalone (no TAOM/Coop dependency), and is fully configurable via ModuleData/HeavyCaravans.ini or Documents/Mount and Blade II Bannerlord/Configs/ModSettings/HeavyCaravans/HeavyCaravans.ini."/>
+        <Tags>
+            <!-- Type: Graphical Enhancement, Map Pack, Partial Conversion, Sound, Total Conversion, Troops, UI, Utility, Weapons and Armour -->
+            <!-- Setting: Native, Antiquity, Dark Ages, Medieval, Musket Era, Modern, Sci-Fi, Fantasy, Oriental, Apocalypse, Other -->
+            <!-- Game Mode: Singleplayer, Multiplayer -->
+            <!-- Compatible Version: the version(s) this was tested against, see docs/environment.md -->
+            <Tag Value="Troops" />
+            <Tag Value="Native" />
+            <Tag Value="Singleplayer" />
+            <Tag Value="v1.4.8" />
+        </Tags>
+        <!-- REQUIRED: point this at a real image (<1MB, e.g. 512x512 PNG/JPG) before running the upload.
+             Placeholder path below does not exist yet - see docs/workshop-publishing.md. -->
+        <Image Value="D:\bannerlord_mod_carawan\publishing\preview.png"/>
+        <Visibility Value="FriendsOnly"/>
+    </UpdateItem>
+</Tasks>
