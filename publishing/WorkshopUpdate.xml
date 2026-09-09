@@ -5,7 +5,7 @@
     </GetItem>
     <UpdateItem>
         <ModuleFolder Value="E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\HeavyCaravans"/>
-        <ChangeNotes Value="Made the item public and added install/configuration instructions to the description."/>
+        <ChangeNotes Value="Fixed Heavy Caravans losing troops to desertion over time (capacity is now derived from the caravan's actual troop count instead of a separately-rounded formula, so it can no longer fall short). Fixed the global troop multiplier not scaling caravan capacity to match its troop count, which could cause desertion on any caravan. Fixed Heavy Caravan creation crashing in a Bannerlord Coop session - the option is now hidden with an explanation there instead (full Coop support is still in progress). Added compatibility notes to the description below."/>
         <ItemDescription Value="Adds a third, heavier trade caravan option - armed with roughly double the troops of an elite caravan, plus extra capacity you can reinforce yourself.
 
 FEATURES
@@ -37,7 +37,12 @@ Available settings:
 - HeavyCaravanBonusCapacity (default 20) - extra troop slots a Heavy Caravan can be reinforced with
 - HeavyCaravanPriceMultiplier (default 2.0) - how much more a Heavy Caravan costs to form
 
-Changes take effect after restarting the game."/>
+Changes take effect after restarting the game.
+
+COMPATIBILITY
+- Coop + TAOM together: Heavy Caravans don't work yet (the option is hidden in a Coop session), but the global troop multiplier still applies correctly to all caravan types.
+- Singleplayer + TAOM: works fine.
+- Coop: currently crashes."/>
         <Tags>
             <Tag Value="Troops" />
             <Tag Value="Native" />
