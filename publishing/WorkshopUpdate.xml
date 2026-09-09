@@ -5,8 +5,10 @@
     </GetItem>
     <UpdateItem>
         <ModuleFolder Value="E:\SteamLibrary\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\HeavyCaravans"/>
-        <ChangeNotes Value="Fixed Heavy Caravans losing troops to desertion over time (capacity is now derived from the caravan's actual troop count instead of a separately-rounded formula, so it can no longer fall short). Fixed the global troop multiplier not scaling caravan capacity to match its troop count, which could cause desertion on any caravan. Fixed Heavy Caravan creation crashing in a Bannerlord Coop session - the option is now hidden with an explanation there instead (full Coop support is still in progress). Added compatibility notes to the description below."/>
-        <ItemDescription Value="Adds a third, heavier trade caravan option - armed with roughly double the troops of an elite caravan, plus extra capacity you can reinforce yourself.
+        <ChangeNotes Value="v0.1.1 - Fixed Heavy Caravans losing troops to desertion over time (capacity is now derived from the caravan's actual troop count instead of a separately-rounded formula, so it can no longer fall short). Fixed the global troop multiplier not scaling caravan capacity to match its troop count, which could cause desertion on any caravan. Fixed Heavy Caravan creation crashing in a Bannerlord Coop session - the option is now hidden with an explanation there instead (full Coop support is still in progress). Added compatibility notes to the description below."/>
+        <ItemDescription Value="Current version: v0.1.1
+
+Adds a third, heavier trade caravan option - armed with roughly double the troops of an elite caravan, plus extra capacity you can reinforce yourself.
 
 FEATURES
 - A new &quot;Heavy Caravan&quot; option when you form a caravan through a town notable
