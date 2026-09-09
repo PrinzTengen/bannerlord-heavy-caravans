@@ -3,10 +3,11 @@ using System.Reflection;
 using HarmonyLib;
 using HeavyCaravans.Behaviors;
 using HeavyCaravans.Config;
+using HeavyCaravans.Coop;
 using HeavyCaravans.Logging;
+using HeavyCaravans.Patches;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
-using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
 namespace HeavyCaravans
@@ -39,6 +40,10 @@ namespace HeavyCaravans
             {
                 campaignStarter.AddBehavior(new HeavyCaravanBehavior());
                 campaignStarter.AddBehavior(new HeavyCaravanDialogBehavior());
+                // A coop session (client or server) is already established before the campaign
+                // loads, so this is the earliest point where the role is known.
+                Log.Info(CoopInterop.DescribeSession());
+                HarmonyPatchDiagnostics.LogPatchOwners();
             }
         }
     }

@@ -44,10 +44,11 @@ namespace HeavyCaravans.Services
         /// CaravanConversationsCampaignBehavior, which also charges gold in the dialog consequence
         /// rather than in the party-creation helper).
         ///
-        /// Marks the party as Heavy BEFORE scaling its roster (not after): that way
-        /// HeavyCaravanPartySizeLimitPatch already reports the boosted capacity while
-        /// ScaleInitialRoster is adding troops, in case anything downstream ever keys off the
-        /// party's current capacity while this runs.
+        /// Marks the party as Heavy AFTER scaling its roster (not before): HeavyCaravanBehavior
+        /// freezes the troop count at mark time as the capacity baseline, so this has to happen once
+        /// the roster is in its final, fully-scaled state - see HeavyCaravanPartySizeLimitPatch for
+        /// why deriving capacity from that frozen count (rather than recomputing it independently)
+        /// matters.
         /// </summary>
         public static MobileParty CreateHeavyCaravan(Hero owner, Settlement settlement, Hero leader)
         {
@@ -60,9 +61,9 @@ namespace HeavyCaravans.Services
             }
 
             MobileParty party = CaravanPartyComponent.CreateCaravanParty(owner, settlement, template, isInitialSpawn: false, leader, null, isElite: true);
-            HeavyCaravanBehavior.Instance?.MarkAsHeavyCaravan(party);
             ScaleInitialRoster(party);
-            Log.Info($"Created Heavy Caravan for {owner?.Name} at {settlement?.Name}, leader {leader?.Name}.");
+            HeavyCaravanBehavior.Instance?.MarkAsHeavyCaravan(party, party.MemberRoster.TotalManCount);
+            Log.Info($"Created Heavy Caravan for {owner?.Name} at {settlement?.Name}, leader {leader?.Name}, base troop count {party.MemberRoster.TotalManCount}.");
             return party;
         }
 
