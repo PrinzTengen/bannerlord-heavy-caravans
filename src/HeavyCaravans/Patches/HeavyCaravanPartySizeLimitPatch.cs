@@ -9,76 +9,83 @@ using TaleWorlds.Localization;
 namespace HeavyCaravans.Patches
 {
     /// <summary>
-    /// Scales the troop capacity of Heavy Caravans by HeavyCaravanTroopMultiplier and adds the
-    /// configurable bonus capacity on top (phases 8 + 9).
+    /// Keeps caravan troop *capacity* in step with the caravan troop *counts* this mod hands out,
+    /// so caravans don't shed the extra troops again through vanilla desertion
+    /// (DefaultPartyDesertionModel.GetTroopsToDesertDueToWageAndPartySize deserts 25% of anything
+    /// above PartySizeLimit every day, caravans included):
     ///
-    /// Two application points, mutually exclusive:
+    ///  - every caravan: capacity x GlobalCaravanTroopMultiplier, because CaravanTroopMultiplierPatch
+    ///    scales every caravan's starting roster by exactly that (phase 8:
+    ///    "EliteBaseCapacity = VanillaEliteTroops * GlobalCaravanTroopMultiplier"). Without this a
+    ///    global multiplier above 1.0 made *every* caravan - vanilla elite ones too - desert: a TAOM
+    ///    elite caravan template is 49 troops, vanilla capacity for a player elite caravan is 50.
+    ///  - Heavy caravans additionally: x HeavyCaravanTroopMultiplier, plus HeavyCaravanBonusCapacity
+    ///    flat on top (phases 8 + 9).
     ///
-    ///  - No TAOM: this postfix on the *base* DefaultPartySizeLimitModel method is the final word on
-    ///    party size limit, so applying the boost here is correct and sufficient.
-    ///  - TAOM loaded: TaomPartySizeModel.GetPartyMemberSizeLimit calls this same base method first
-    ///    (a non-virtual `base.` call, so this postfix still fires), then applies its own further
-    ///    adjustments - critically TAOM's troop-weight penalty
-    ///    (TAOM.Features.TroopWeight.TroopWeightService.ApplyPartySizeWeightPenalty), which subtracts
-    ///    capacity proportional to how much heavier-than-average the roster is. A Heavy Caravan is
-    ///    built entirely from elite (high-weight) troops and then has its troop count doubled, so that
-    ///    penalty roughly doubles too - applying our boost *before* it (i.e. here) leaves the final,
-    ///    TAOM-adjusted limit short of the actual (doubled) troop count, which used to cause daily
-    ///    desertion once the caravan was sent off. So when TAOM is present, this postfix backs off
-    ///    entirely and HeavyCaravanTaomPostfix (registered dynamically in SubModule, since
-    ///    TaomPartySizeModel isn't a compile-time reference) applies the boost *after* TAOM's full
-    ///    pipeline instead, scaling the true final number rather than an intermediate one.
+    /// Math note: ExplainedNumber factors are additive on the base (Result = Base * (1 + SumOfFactors)),
+    /// so stacking two AddFactor calls would give x4 for 2.5 x 2.5 instead of x6.25, and an Add()
+    /// after an AddFactor gets multiplied by the factor as well (+20 became +50). Both are therefore
+    /// applied as a single flat delta on the current result, divided by (1 + SumOfFactors) so the
+    /// *final* number moves by exactly the intended amount - the same trick TAOM's
+    /// TroopWeightService.SubtractResultFramePenalty uses.
     ///
-    /// Deliberately not a competing PartySizeLimitModel registered via AddModel: that would either
-    /// silently replace TAOM's model (losing its cultural-feat/career/AI/troop-weight adjustments,
-    /// depending on module load order) or require duplicating TAOM-internal logic to reimplement them
-    /// - see phases/02-analyse-caravan-system.md and phases/13-taom-kompatibilitaet.md.
+    /// TAOM: TaomPartySizeModel calls this base method (so this postfix fires inside it) and then
+    /// applies its own adjustments, notably the troop-weight penalty. That penalty is computed from
+    /// TroopWeights/troop_weights.xml, which weights 105 elite kingdom units (2.0-10.0) and not a single
+    /// troop that appears in any caravan party template (verified against taom_partyTemplates.xml), so
+    /// for caravans it is exactly 0 - and even if it weren't, applying our boost *before* it is the
+    /// coherent order (the penalty then only subtracts the weight excess from the already boosted
+    /// limit, whereas applying a factor *after* it would multiply the penalty as well). The earlier
+    /// dynamic postfix on TaomPartySizeModel was built on the wrong theory and has been removed.
     /// </summary>
     [HarmonyPatch(typeof(DefaultPartySizeLimitModel), nameof(DefaultPartySizeLimitModel.GetPartyMemberSizeLimit))]
     public static class HeavyCaravanPartySizeLimitPatch
     {
-        private static readonly TextObject HeavyCaravanBonusText = new TextObject("{=!}Heavy Caravan");
-
-        /// <summary>
-        /// True when TAOM's own PartySizeLimitModel override is loaded - detected purely via
-        /// reflection (no compile-time reference to TAOM.dll), so HeavyCaravans keeps working
-        /// standalone when TAOM isn't installed.
-        /// </summary>
-        internal static readonly bool TaomPartySizeModelPresent =
-            AccessTools.TypeByName("TAOM.Features.CulturalFeats.Models.TaomPartySizeModel") != null;
+        private static readonly TextObject HeavyCaravanText = new TextObject("{=!}Heavy Caravan");
+        private static readonly TextObject CaravanMultiplierText = new TextObject("{=!}Caravan troop multiplier");
 
         private static void Postfix(PartyBase party, ref ExplainedNumber __result)
         {
-            if (TaomPartySizeModelPresent)
+            MobileParty mobileParty = party?.MobileParty;
+            if (mobileParty == null || !mobileParty.IsCaravan)
             {
-                // TAOM's own wrapper (patched separately, see HeavyCaravanTaomPostfix) applies the
-                // boost after its troop-weight penalty instead - applying it here too would double it.
                 return;
             }
-            ApplyHeavyCaravanBoost(party, ref __result);
+            bool isHeavy = HeavyCaravanBehavior.Instance != null && HeavyCaravanBehavior.Instance.IsHeavyCaravan(mobileParty);
+            ApplyCaravanCapacity(ref __result, isHeavy,
+                HeavyCaravanSettings.GlobalCaravanTroopMultiplier,
+                HeavyCaravanSettings.HeavyCaravanTroopMultiplier,
+                HeavyCaravanSettings.HeavyCaravanBonusCapacity);
         }
 
         /// <summary>
-        /// Registered dynamically against TaomPartySizeModel.GetPartyMemberSizeLimit from
-        /// SubModule.OnSubModuleLoad, only when TaomPartySizeModelPresent - see that method for why
-        /// this can't be a compile-time [HarmonyPatch] attribute.
+        /// Final = current * global (all caravans); Heavy: final = current * global * heavy + bonus.
         /// </summary>
-        internal static void HeavyCaravanTaomPostfix(PartyBase party, ref ExplainedNumber __result)
+        internal static void ApplyCaravanCapacity(ref ExplainedNumber result, bool isHeavy, float globalMultiplier, float heavyMultiplier, int bonusCapacity)
         {
-            ApplyHeavyCaravanBoost(party, ref __result);
-        }
-
-        private static void ApplyHeavyCaravanBoost(PartyBase party, ref ExplainedNumber result)
-        {
-            MobileParty mobileParty = party?.MobileParty;
-            if (mobileParty == null || HeavyCaravanBehavior.Instance == null || !HeavyCaravanBehavior.Instance.IsHeavyCaravan(mobileParty))
+            float denominator = 1f + result.SumOfFactors;
+            if (denominator <= 0.01f)
             {
                 return;
             }
+            float current = result.ResultNumber;
+            if (globalMultiplier != 1f)
+            {
+                AddFlat(ref result, current * (globalMultiplier - 1f), denominator, CaravanMultiplierText);
+            }
+            if (isHeavy)
+            {
+                float afterGlobal = current * globalMultiplier;
+                AddFlat(ref result, afterGlobal * (heavyMultiplier - 1f) + bonusCapacity, denominator, HeavyCaravanText);
+            }
+        }
 
-            // AddFactor takes the *extra* fraction on top of 1.0 - e.g. multiplier 2.0 => +100%.
-            result.AddFactor(HeavyCaravanSettings.HeavyCaravanTroopMultiplier - 1f, HeavyCaravanBonusText);
-            result.Add(HeavyCaravanSettings.HeavyCaravanBonusCapacity, HeavyCaravanBonusText);
+        private static void AddFlat(ref ExplainedNumber result, float delta, float denominator, TextObject description)
+        {
+            if (delta != 0f)
+            {
+                result.Add(delta / denominator, description);
+            }
         }
     }
 }

@@ -43,6 +43,10 @@ namespace HeavyCaravans.Behaviors
         private void AddDialogs(CampaignGameStarter starter)
         {
             starter.AddPlayerLine("heavy_caravan_offer", "magistrate_form_a_caravan_player_answer", "heavy_caravan_offer_cost", "{=!}{HEAVY_CARAVAN_OFFER_TEXT}", OnOfferCondition, null);
+            // On a Bannerlord Coop client the caravan could only be formed by the coop server (see
+            // CoopInterop) - say so up front instead of failing after the leader was picked. The two
+            // NPC replies below are mutually exclusive by condition, so their order does not matter.
+            starter.AddDialogLine("heavy_caravan_offer_coop_blocked", "heavy_caravan_offer_cost", "lord_pretalk", "{=!}That cannot be arranged in a shared (Bannerlord Coop) campaign yet - the host's server would have to raise such a caravan, and it does not know how. Perhaps another time.", OnCoopBlockedCondition, null);
             starter.AddDialogLine("heavy_caravan_offer_cost_line", "heavy_caravan_offer_cost", "heavy_caravan_player_answer", "{=!}{HEAVY_CARAVAN_COST_TEXT}", OnCostCondition, null);
             starter.AddPlayerLine("heavy_caravan_accept", "heavy_caravan_player_answer", "heavy_caravan_accepted", "{=!}{HEAVY_CARAVAN_ACCEPT_TEXT}", OnAcceptCondition, OnAcceptConsequence);
             starter.AddPlayerLine("heavy_caravan_no_gold", "heavy_caravan_player_answer", "lord_pretalk", "{=w6WFuDn0}I am sorry, I don't have that much money.", OnNoGoldCondition, null);
@@ -76,8 +80,22 @@ namespace HeavyCaravans.Behaviors
             return true;
         }
 
+        private bool OnCoopBlockedCondition()
+        {
+            if (CoopInterop.CanPerformAuthoritativeAction())
+            {
+                return false;
+            }
+            Log.Warn("Heavy Caravan offer declined: this game is a Bannerlord Coop client, and parties can only be created by the coop server (CoopInterop).");
+            return true;
+        }
+
         private bool OnCostCondition()
         {
+            if (!CoopInterop.CanPerformAuthoritativeAction())
+            {
+                return false;
+            }
             MBTextManager.SetTextVariable("AMOUNT", GetCost());
             MBTextManager.SetTextVariable("HEAVY_CARAVAN_COST_TEXT", new TextObject("{=!}That can be arranged, but it will cost considerably more: {AMOUNT}{GOLD_ICON}."));
             return true;
@@ -137,10 +155,14 @@ namespace HeavyCaravans.Behaviors
             {
                 if (!CoopInterop.CanPerformAuthoritativeAction())
                 {
-                    Log.Warn("Heavy caravan creation blocked: no host authority.");
+                    // Normally unreachable (OnCostCondition already hides this path on a coop
+                    // client), kept as a hard stop: Coop's patches skip the CaravanPartyComponent
+                    // constructor on clients and CreateCaravanParty would throw - see CoopInterop.
+                    Log.Warn("Heavy caravan creation blocked: this game is a Bannerlord Coop client. " + CoopInterop.DescribeSession());
+                    MBTextManager.SetTextVariable("HEAVY_CARAVAN_FINAL_TEXT", new TextObject("{=!}Forgive me - in a shared campaign only the host's server may raise such a caravan, and it does not know how yet. No gold has changed hands."));
                     return;
                 }
-                Log.Info("Host authority detected, proceeding with Heavy caravan creation.");
+                Log.Info("Proceeding with Heavy caravan creation. " + CoopInterop.DescribeSession());
 
                 var leaderCharacter = ConversationSentence.SelectedRepeatObject as CharacterObject;
                 Hero leader = leaderCharacter?.HeroObject;
@@ -205,7 +227,9 @@ namespace HeavyCaravans.Behaviors
 
         private bool OnReinforceOfferCondition()
         {
-            return IsTalkingToOwnHeavyCaravanLeader() && CaravanTroopTransferService.GetFreeSlots(MobileParty.ConversationParty) > 0;
+            return IsTalkingToOwnHeavyCaravanLeader()
+                && CoopInterop.CanPerformAuthoritativeAction()
+                && CaravanTroopTransferService.GetFreeSlots(MobileParty.ConversationParty) > 0;
         }
 
         private void OnReinforceOfferConsequence()
